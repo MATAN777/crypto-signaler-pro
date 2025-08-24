@@ -1,0 +1,68 @@
+import pandas as pd
+from app.models import IndicatorParams, Signal
+from app.indicators.ta import compute_indicators, last_cross
+
+def make_signal(df: pd.DataFrame, timeframe: str, params: IndicatorParams, risk_reward: float = 3.0) -> Signal:
+    df_i = compute_indicators(df, params)
+    row = df_i.iloc[-1]
+    prev = df_i.iloc[-2] if len(df_i) >= 2 else row
+
+    score = 0.0
+    reasons = []
+
+    # Triple EMA structure
+    ef, em, es = row["ema_fast"], row["ema_mid"], row["ema_slow"]
+    if pd.notna(ef) and pd.notna(em) and pd.notna(es):
+        if ef > em > es:
+            score += 1; reasons.append("EMA structure up (35>75>200)")
+        elif ef < em < es:
+            score -= 1; reasons.append("EMA structure down (35<75<200)")
+
+    # Crossovers
+    c1 = last_cross(df_i["ema_fast"], df_i["ema_mid"])
+    if c1 == 1: score += 1; reasons.append("EMA35 crossed above EMA75")
+    elif c1 == -1: score -= 1; reasons.append("EMA35 crossed below EMA75")
+
+    c2 = last_cross(df_i["ema_mid"], df_i["ema_slow"])
+    if c2 == 1: score += 1; reasons.append("EMA75 crossed above EMA200")
+    elif c2 == -1: score -= 1; reasons.append("EMA75 crossed below EMA200")
+
+    # Price vs mid
+    if pd.notna(row.get("close")) and pd.notna(em):
+        if row["close"] > em: score += 0.5; reasons.append("Price > EMA75")
+        elif row["close"] < em: score -= 0.5; reasons.append("Price < EMA75")
+
+    # StochRSI cross from extremes
+    if pd.notna(row.get("stoch_k")) and pd.notna(row.get("stoch_d")):
+        up = (prev["stoch_k"] <= prev["stoch_d"]) and (row["stoch_k"] > row["stoch_d"])
+        dn = (prev["stoch_k"] >= prev["stoch_d"]) and (row["stoch_k"] < row["stoch_d"])
+        if up and row["stoch_k"] < 20: score += 1; reasons.append("StochRSI K>D from oversold (<20)")
+        if dn and row["stoch_k"] > 80: score -= 1; reasons.append("StochRSI K<D from overbought (>80)")
+
+    # MACD confirm
+    if pd.notna(row.get("macd")) and pd.notna(row.get("macd_signal")):
+        if row["macd"] > row["macd_signal"]:
+            score += 0.5; reasons.append("MACD > signal")
+        elif row["macd"] < row["macd_signal"]:
+            score -= 0.5; reasons.append("MACD < signal")
+
+    side = "NEUTRAL"
+    if score >= 2.0: side = "BUY"
+    elif score <= -2.0: side = "SELL"
+
+    entry = float(row["close"])
+    atr = float(row["atr"]) if pd.notna(row.get("atr")) else None
+    target = None
+    if atr is not None and side in ("BUY","SELL"):
+        rr = risk_reward if risk_reward and risk_reward > 0 else 3.0
+        target = entry + rr * atr if side == "BUY" else entry - rr * atr
+
+    return Signal(
+        timeframe=timeframe,
+        side=side,
+        entry=entry,
+        target=target,
+        last_price=entry,
+        confidence=min(1.0, abs(score)/3.0),
+        metadata={"reasons": reasons, "score": score}
+    )

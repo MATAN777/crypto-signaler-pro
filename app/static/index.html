@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crypto Signaler PRO — Bybit</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #60a5fa;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+      --chip: #1f2937;
+      --border: #1f2937;
+      --tableStripe: rgba(255,255,255,0.02);
+    }
+    [data-theme="light"]{
+      --bg:#f6f7fb; --card:#ffffff; --muted:#4b5563; --text:#0f172a;
+      --accent:#2563eb; --ok:#16a34a; --warn:#d97706; --err:#dc2626;
+      --chip:#f1f5f9; --border:#e5e7eb; --tableStripe:#f8fafc;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Heebo,"Noto Sans Hebrew",Arial}
+    .wrap{max-width:1150px;margin:28px auto;padding:0 16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+    h1{font-size:22px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);display:inline-block}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    input,button,select{font:inherit}
+    input[type=text],input[type=number]{width:100%;padding:10px 10px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text)}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--chip);color:var(--text);cursor:pointer}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .btn.ghost{background:transparent}
+    .btn.success{background:var(--ok);border-color:var(--ok);color:#fff}
+    .btn.warn{background:var(--warn);border-color:var(--warn);color:#000}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .col-3{grid-column:span 3}
+    .col-4{grid-column:span 4}
+    .col-6{grid-column:span 6}
+    .col-12{grid-column:span 12}
+    @media(max-width:900px){.col-3,.col-4,.col-6{grid-column:span 12}}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{font-weight:600;text-align:right;padding:12px;border-bottom:1px solid var(--border);color:var(--muted)}
+    tbody td{padding:10px;border-bottom:1px dashed var(--border)}
+    tbody tr:nth-child(odd){background:var(--tableStripe)}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-weight:600}
+    .chip.buy{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:var(--ok)}
+    .chip.sell{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:var(--err)}
+    .chip.neutral{color:var(--muted)}
+    .pill{display:inline-block;background:var(--chip);border:1px solid var(--border);padding:2px 8px;border-radius:999px}
+    .tabs{display:flex;gap:6px;margin-bottom:10px}
+    .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:var(--chip);cursor:pointer}
+    .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .section{display:none}
+    .section.active{display:block}
+    .right{float:inline-start}
+    .muted{color:var(--muted)}
+    .kbd{font:12px "JetBrains Mono",ui-monospace,monospace;background:var(--chip);border:1px solid var(--border);padding:1px 6px;border-radius:6px}
+    .theme{display:flex;align-items:center;gap:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1><span class="dot"></span> Crypto Signaler PRO — Bybit
+      <span class="right theme">
+        Theme
+        <button id="themeToggle" class="btn">🌓</button>
+      </span>
+    </h1>
+
+    <!-- SETTINGS -->
+    <div class="card">
+      <div class="toolbar" style="margin-bottom:12px">
+        <button id="btnPersist" class="btn success">שמור (Persist)</button>
+        <button id="btnUpdateOnly" class="btn">עדכן לזמן ריצה בלבד</button>
+        <button id="btnRefreshSignals" class="btn primary">רענן סיגנלים</button>
+      </div>
+
+      <div class="grid">
+        <div class="col-3">
+          <label>Symbol</label>
+          <input id="symbol" type="text" value="BTCUSDT" />
+        </div>
+        <div class="col-3">
+          <label>Timeframes (CSV)</label>
+          <input id="timeframes" type="text" value="15m,1h,4h,d,w" />
+        </div>
+        <div class="col-3">
+          <label>Risk-Reward</label>
+          <input id="riskReward" type="number" step="0.1" min="0.5" max="10" value="3" />
+        </div>
+        <div class="col-3">
+          <label>Decision Threshold</label>
+          <input id="decisionThreshold" type="number" step="0.1" min="0.5" max="5" value="1.5" />
+        </div>
+
+        <div class="col-4">
+          <label>EMA (fast,mid,slow)</label>
+          <input id="ema" type="text" value="35,75,200" />
+        </div>
+        <div class="col-4">
+          <label>MACD (fast,slow,signal)</label>
+          <input id="macd" type="text" value="12,26,9" />
+        </div>
+        <div class="col-4">
+          <label>StochRSI (rsi,stoch,k,d)</label>
+          <input id="stoch" type="text" value="14,14,3,3" />
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGNALS TABLE -->
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-weight:700">סיגנלים לפי טיים־פריים</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30%">Reasons</th>
+            <th>Confidence</th>
+            <th>Target</th>
+            <th>Entry</th>
+            <th>Side</th>
+            <th style="width:9rem">Timeframe</th>
+          </tr>
+        </thead>
+        <tbody id="signalsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ENTRY HELPERS -->
+    <div class="card" style="margin-top:14px">
+      <div class="tabs">
+        <button class="tab active" data-tab="fib">Retracement 0.31 (Fib)</button>
+        <button class="tab" data-tab="zones">Demand / Supply Zones</button>
+      </div>
+      <div class="row" style="margin-bottom:10px;gap:10px">
+        <div>
+          <label>TF לחישוב עזר</label>
+          <select id="entryTf" class="btn">
+            <option>15m</option><option selected>1h</option><option>4h</option><option>d</option><option>w</option>
+          </select>
+        </div>
+        <button id="btnRefreshEntry" class="btn primary">רענן עזרי כניסה</button>
+      </div>
+
+      <!-- FIB 0.31 -->
+      <div id="sec-fib" class="section active">
+        <div class="grid">
+          <div class="col-4">
+            <label>סוג סיגנל</label>
+            <div id="fib-side" class="chip neutral">-</div>
+          </div>
+          <div class="col-4">
+            <label>Entry מוצע</label>
+            <div id="fib-entry" class="pill">-</div>
+          </div>
+          <div class="col-4">
+            <label>Stop</label>
+            <div id="fib-stop" class="pill">-</div>
+          </div>
+          <div class="col-4">
+            <label>Target (RR)</label>
+            <div id="fib-target" class="pill">-</div>
+          </div>
+          <div class="col-4">
+            <label>Distance מהמחיר הנוכחי</label>
+            <div id="fib-distance" class="muted">-</div>
+          </div>
+          <div class="col-4">
+            <label>ATR (מידע)</label>
+            <div id="fib-atr" class="muted">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEMAND / SUPPLY -->
+      <div id="sec-zones" class="section">
+        <div class="grid">
+          <div class="col-4">
+            <label>Demand</label>
+            <div id="ds-demand" class="pill">-</div>
+          </div>
+          <div class="col-4">
+            <label>Supply</label>
+            <div id="ds-supply" class="pill">-</div>
+          </div>
+          <div class="col-4">
+            <label>ATR</label>
+            <div id="ds-atr" class="muted">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRADE TRACKER -->
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700">מעקב עסקאות</div>
+        <button id="btnAddTrade" class="btn">+ הוסף עסקה</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>פעולות</th>
+            <th>%PNL</th>
+            <th>סטטוס</th>
+            <th>Stop</th>
+            <th>Target</th>
+            <th>Lev</th>
+            <th>Size</th>
+            <th>Entry</th>
+            <th>Side</th>
+            <th>TF</th>
+            <th>Symbol</th>
+            <th>תאריך</th>
+          </tr>
+        </thead>
+        <tbody id="tradesBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // ---------- helpers ----------
+    const $ = (id)=>document.getElementById(id);
+    const fmt = (n, d=3)=> (n==null||isNaN(n))? '-' : Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
+    const pct = (x)=> (x==null||isNaN(x))? '0.000%' : (x*100).toFixed(3)+'%';
+
+    function setTheme(t){
+      document.body.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+    }
+    (function initTheme(){
+      setTheme(localStorage.getItem('theme') || 'dark');
+      $('themeToggle').onclick = ()=> setTheme(document.body.getAttribute('data-theme')==='dark'?'light':'dark');
+    })();
+
+    // ---------- SETTINGS ----------
+    async function loadSettings(){
+      const r = await fetch('api/settings',{cache:'no-store'});
+      const s = await r.json();
+      $('symbol').value = s.symbol || 'BTCUSDT';
+      $('timeframes').value = (s.timeframes||['15m','1h','4h','d','w']).join(',');
+      $('riskReward').value = s.risk_reward ?? 3;
+      $('decisionThreshold').value = s.decision_threshold ?? 1.5;
+      $('ema').value = (s.ema||[35,75,200]).join(',');
+      $('macd').value = (s.macd||[12,26,9]).join(',');
+      $('stoch').value = (s.stoch||[14,14,3,3]).join(',');
+    }
+
+    function readSettingsFromUI(){
+      return {
+        symbol: $('symbol').value.trim().toUpperCase(),
+        timeframes: $('timeframes').value.split(',').map(x=>x.trim()).filter(Boolean),
+        risk_reward: parseFloat($('riskReward').value),
+        decision_threshold: parseFloat($('decisionThreshold').value),
+        ema: $('ema').value.split(',').map(x=>parseInt(x.trim(),10)),
+        macd: $('macd').value.split(',').map(x=>parseInt(x.trim(),10)),
+        stoch: $('stoch').value.split(',').map(x=>parseInt(x.trim(),10)),
+      };
+    }
+
+    async function saveSettings(persist=true){
+      const payload = readSettingsFromUI();
+      const r = await fetch('api/settings?persist='+persist,{
+        method:'PUT',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify(payload),
+      });
+      if(!r.ok){
+        const j = await r.json().catch(()=>({detail:r.statusText}));
+        alert('שגיאה:\n'+(j.detail||r.statusText));
+        return;
+      }
+      if(persist) alert('נשמר בהצלחה!');
+    }
+
+    $('btnPersist').onclick = ()=> saveSettings(true);
+    $('btnUpdateOnly').onclick = ()=> saveSettings(false);
+
+    // ---------- SIGNALS ----------
+    async function fetchOneSignal(tf){
+      const s = readSettingsFromUI();
+      const url = `api/analyze?symbol=${encodeURIComponent(s.symbol)}&timeframe=${encodeURIComponent(tf)}`;
+      const r = await fetch(url,{cache:'no-store'});
+      if(!r.ok) return null;
+      return r.json();
+    }
+
+    function sideChip(side){
+      side = (side||'NEUTRAL').toUpperCase();
+      const cls = side==='BUY'?'buy': (side==='SELL'?'sell':'neutral');
+      return `<span class="chip ${cls}">${side}</span>`;
+    }
+
+    function reasonsText(sig){
+      const fromPayload = sig?.signal?.metadata?.reasons || sig?.signal?.reasons || [];
+      if(Array.isArray(fromPayload) && fromPayload.length) return fromPayload.join(' • ');
+      return '-';
+    }
+
+    async function refreshSignals(){
+      // קודם שמירה להרצה בלבד כדי להבטיח סינכרון TF
+      await saveSettings(false).catch(()=>{});
+      const s = readSettingsFromUI();
+      const body = $('signalsBody');
+      body.innerHTML = '';
+      for(const tf of s.timeframes){
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="muted">…</td>
+          <td class="muted">…</td>
+          <td class="muted">…</td>
+          <td class="muted">…</td>
+          <td class="muted">…</td>
+          <td><span class="pill">${tf}</span></td>`;
+        body.appendChild(row);
+
+        try{
+          const data = await fetchOneSignal(tf);
+          const sig = data?.signal || {};
+          const conf = pct(sig.confidence);
+          const target = sig.target==null? '-' : fmt(sig.target,2);
+          const entry  = sig.entry==null? '-' : fmt(sig.entry,2);
+          row.children[0].textContent = reasonsText(data);
+          row.children[1].textContent = conf;
+          row.children[2].textContent = target;
+          row.children[3].textContent = entry;
+          row.children[4].innerHTML = sideChip(sig.side);
+        }catch(e){
+          row.children[0].textContent = '-';
+          row.children[1].textContent = '—';
+          row.children[2].textContent = '-';
+          row.children[3].textContent = '-';
+          row.children[4].innerHTML   = sideChip('NEUTRAL');
+          console.error('signal error', tf, e);
+        }
+      }
+    }
+    $('btnRefreshSignals').onclick = refreshSignals;
+
+    // ---------- ENTRY HELPERS ----------
+    async function refreshFib031(){
+      const symbol = $('symbol').value.trim().toUpperCase();
+      const tf = $('entryTf').value;
+      const r = await fetch(`api/fib031?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(tf)}`, {cache:'no-store'});
+      const j = await r.json().catch(()=>null);
+
+      const es  = j?.entry_suggestion;
+      const fib = j?.fib031;
+
+      $('fib-side').className = 'chip neutral';
+      $('fib-side').textContent = '-';
+      $('fib-entry').textContent = '-';
+      $('fib-stop').textContent = '-';
+      $('fib-target').textContent = '-';
+      $('fib-distance').textContent = '-';
+      $('fib-atr').textContent = '-';
+
+      if(fib){
+        $('fib-distance').textContent = fib.distance_pct!=null ? fib.distance_pct.toFixed(3)+'%' : '-';
+        $('fib-atr').textContent = fib.atr!=null ? fmt(fib.atr,2) : '-';
+      }
+      if(es){
+        $('fib-entry').textContent = fmt(es.entry,3);
+        $('fib-stop').textContent  = fmt(es.stop,3);
+        $('fib-target').textContent= fmt(es.target,3);
+        $('fib-side').textContent  = es.side;
+        $('fib-side').className    = 'chip '+(es.side==='BUY'?'buy':(es.side==='SELL'?'sell':'neutral'));
+      }
+    }
+
+    async function refreshZonesCard(){
+      const symbol = $('symbol').value.trim().toUpperCase();
+      const tf = $('entryTf').value;
+      const r = await fetch(`api/zones?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(tf)}`, {cache:'no-store'});
+      const j = await r.json().catch(()=>null);
+      const z = j?.zones;
+
+      $('ds-demand').textContent = '-';
+      $('ds-supply').textContent = '-';
+      $('ds-atr').textContent    = '-';
+
+      if(z){
+        $('ds-demand').textContent = `${fmt(z.demand?.low,3)} – ${fmt(z.demand?.high,3)}`;
+        $('ds-supply').textContent = `${fmt(z.supply?.low,3)} – ${fmt(z.supply?.high,3)}`;
+        $('ds-atr').textContent    = fmt(z.atr,2);
+      }
+    }
+
+    function wireTabs(){
+      document.querySelectorAll('.tab').forEach(btn=>{
+        btn.onclick = ()=>{
+          document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+          btn.classList.add('active');
+          const tab = btn.dataset.tab;
+          document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+          $('sec-'+tab).classList.add('active');
+        };
+      });
+    }
+
+    $('btnRefreshEntry').onclick = async ()=>{
+      await refreshFib031();
+      await refreshZonesCard();
+    };
+
+    // ---------- TRADES (פשוט) ----------
+    function addTradeRow(t = {}){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><button class="btn ghost" onclick="this.closest('tr').remove()">מחק</button></td>
+        <td class="muted">0.000%</td>
+        <td>פתוח</td>
+        <td contenteditable></td>
+        <td contenteditable></td>
+        <td contenteditable>1x</td>
+        <td contenteditable>0</td>
+        <td contenteditable>${fmt(t.entry||'')}</td>
+        <td contenteditable>${t.side||''}</td>
+        <td contenteditable>${$('entryTf').value}</td>
+        <td contenteditable>${$('symbol').value.toUpperCase()}</td>
+        <td class="muted">${new Date().toLocaleString('he-IL')}</td>`;
+      $('tradesBody').prepend(tr);
+    }
+    $('btnAddTrade').onclick = ()=> addTradeRow();
+
+    // ---------- bootstrap ----------
+    window.addEventListener('load', async ()=>{
+      wireTabs();
+      await loadSettings();
+      await refreshSignals();
+      await refreshFib031();
+      await refreshZonesCard();
+    });
+  </script>
+</body>
+</html>

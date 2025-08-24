@@ -1,0 +1,54 @@
+
+from __future__ import annotations
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+import asyncio
+
+from app.config import settings
+from app.clients.bybit_client import fetch_klines
+from app.models import IndicatorParams
+from app.strategies.rules import make_signal
+from app.notifiers.telegram import send_telegram
+
+# ניתן להרחיב/לצמצם כרצונך
+CRON_MAP = {
+    "1m":  CronTrigger(minute="*"),
+    "5m":  CronTrigger(minute="*/5"),
+    "15m": CronTrigger(minute="*/15"),
+    "30m": CronTrigger(minute="*/30"),
+    "1h":  CronTrigger(minute=1),
+    "2h":  CronTrigger(hour="*/2", minute=1),
+    "4h":  CronTrigger(hour="*/4", minute=1),
+    "6h":  CronTrigger(hour="*/6", minute=1),
+    "12h": CronTrigger(hour="*/12", minute=1),
+    "d":   CronTrigger(hour=0, minute=5),
+    "w":   CronTrigger(day_of_week="mon", hour=0, minute=10),
+    "m":   CronTrigger(day=1, hour=0, minute=15),
+}
+
+async def run_signal_once(symbol: str, timeframe: str, params: "IndicatorParams"):
+    df = await fetch_klines(symbol, timeframe, limit=400)
+    sig = make_signal(df, timeframe, params, risk_reward=settings.risk_reward)
+    if settings.telegram_bot_token and settings.telegram_chat_id and sig.side in ("BUY", "SELL"):
+        text = (
+            f"<b>{symbol}</b> [{timeframe}] — <b>{sig.side}</b>\n"
+            f"Entry: {sig.entry}\n"
+            f"Target: {sig.target}\n"
+            f"Reasons: {', '.join(sig.metadata.get('reasons', []))}\n"
+            f"Confidence: {sig.confidence:.0%}\n"
+        )
+        await send_telegram(settings.telegram_bot_token, settings.telegram_chat_id, text)
+    return sig
+
+def configure_scheduler(app_state, params: "IndicatorParams"):
+    scheduler = AsyncIOScheduler()
+    symbol = settings.default_symbol
+    for tf, trig in CRON_MAP.items():
+        if tf in settings.timeframes:
+            scheduler.add_job(
+                lambda s=symbol, t=tf: asyncio.create_task(run_signal_once(s, t, params)),
+                trig
+            )
+    scheduler.start()
+    app_state.scheduler = scheduler
