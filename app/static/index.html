@@ -60,6 +60,10 @@
     .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
     .section{display:none}
     .section.active{display:block}
+    .chart{height:360px;border:1px solid var(--border);border-radius:10px;position:relative;background:#0b1021}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--border)}
+    .badge.extreme{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3)}
+    .badge.super{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3)}
     .right{float:inline-start}
     .muted{color:var(--muted)}
     .kbd{font:12px "JetBrains Mono",ui-monospace,monospace;background:var(--chip);border:1px solid var(--border);padding:1px 6px;border-radius:6px}
@@ -120,6 +124,10 @@
     <div class="card" style="margin-top:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="font-weight:700">סיגנלים לפי טיים־פריים</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button id="btnExtreme" class="btn warn">Highlight EXTREME BUY / SUPER SELL</button>
+          <span id="extremeBadge" class="badge">-</span>
+        </div>
       </div>
       <table>
         <thead>
@@ -136,8 +144,13 @@
       </table>
     </div>
 
-    <!-- ENTRY HELPERS -->
+    <!-- CHART + ENTRY HELPERS -->
     <div class="card" style="margin-top:14px">
+      <div class="grid" style="margin-bottom:12px">
+        <div class="col-12">
+          <div id="chart" class="chart"></div>
+        </div>
+      </div>
       <div class="tabs">
         <button class="tab active" data-tab="fib">Retracement 0.31 (Fib)</button>
         <button class="tab" data-tab="zones">Demand / Supply Zones</button>
@@ -379,6 +392,70 @@
       }
     }
 
+    // ---------- SIMPLE LIGHTWEIGHT CHART ----------
+    let chartData = null;
+    function renderChart(bundle){
+      const el = $('chart');
+      el.innerHTML = '';
+      const w = el.clientWidth || 800; const h = el.clientHeight || 360;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h; canvas.style.width = '100%'; canvas.style.height = '100%';
+      el.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      const data = bundle?.ohlcv || [];
+      if(!data.length) return;
+      const highs = data.map(d=>d[2]);
+      const lows  = data.map(d=>d[3]);
+      const maxH = Math.max(...highs), minL = Math.min(...lows);
+      const pad = 0.06*(maxH-minL);
+      const hi = maxH+pad, lo = minL-pad;
+      const xstep = w / data.length;
+      function y(price){ return h - (price - lo) / (hi - lo) * h; }
+      ctx.lineWidth = 1;
+      for(let i=0;i<data.length;i++){
+        const [t,o,hiP,loP,c] = [data[i][0],data[i][1],data[i][2],data[i][3],data[i][4]];
+        const x = i*xstep + xstep*0.5;
+        const up = c>=o; ctx.strokeStyle = up? '#16a34a' : '#ef4444';
+        ctx.beginPath(); ctx.moveTo(x, y(hiP)); ctx.lineTo(x, y(loP)); ctx.stroke();
+        ctx.fillStyle = up? '#16a34a' : '#ef4444';
+        const bw = Math.max(1, xstep*0.6);
+        const top = y(Math.max(o,c)); const bot = y(Math.min(o,c));
+        ctx.fillRect(x - bw/2, top, bw, Math.max(1, bot-top));
+      }
+      // Fib 0.31 line
+      const fib = bundle?.fib031; if(fib){
+        ctx.strokeStyle = '#60a5fa'; ctx.setLineDash([6,4]); ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(0, y(fib.level)); ctx.lineTo(w, y(fib.level)); ctx.stroke(); ctx.setLineDash([]);
+      }
+      // Zones
+      const z = bundle?.zones; if(z){
+        ctx.fillStyle = 'rgba(34,197,94,0.08)';
+        const dLow = y(z.demand?.high||0), dHigh = y(z.demand?.low||0);
+        ctx.fillRect(0, dHigh, w, Math.max(1, dLow-dHigh));
+        ctx.fillStyle = 'rgba(239,68,68,0.08)';
+        const sLow = y(z.supply?.high||0), sHigh = y(z.supply?.low||0);
+        ctx.fillRect(0, sHigh, w, Math.max(1, sLow-sHigh));
+      }
+    }
+
+    async function refreshChart(){
+      const symbol = $('symbol').value.trim().toUpperCase();
+      const tf = $('entryTf').value;
+      const r = await fetch(`api/chart?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(tf)}`, {cache:'no-store'});
+      const j = await r.json().catch(()=>null);
+      chartData = j; renderChart(j);
+      const badge = $('extremeBadge');
+      if(j?.confluence?.label){
+        badge.textContent = `${j.confluence.label} (${(j.confluence.score||0).toFixed(2)})`;
+        badge.className = 'badge ' + (j.confluence.label.includes('BUY')? 'extreme' : (j.confluence.label.includes('SELL')? 'super' : ''));
+      }else{ badge.textContent = '-'; badge.className = 'badge'; }
+    }
+
+    $('btnExtreme').onclick = ()=>{
+      if(!chartData?.confluence?.reasons?.length){ alert('No extreme signal now.'); return; }
+      alert(chartData.confluence.label + '\n' + chartData.confluence.reasons.join('\n'));
+    };
+
     async function refreshZonesCard(){
       const symbol = $('symbol').value.trim().toUpperCase();
       const tf = $('entryTf').value;
@@ -412,6 +489,7 @@
     $('btnRefreshEntry').onclick = async ()=>{
       await refreshFib031();
       await refreshZonesCard();
+      await refreshChart();
     };
 
     // ---------- TRADES (פשוט) ----------
@@ -441,6 +519,7 @@
       await refreshSignals();
       await refreshFib031();
       await refreshZonesCard();
+      await refreshChart();
     });
   </script>
 </body>
