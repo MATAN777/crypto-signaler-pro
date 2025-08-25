@@ -18,6 +18,7 @@ from app.indicators.ta import (
     suggest_entry_from_fib,
     approximate_zones,
 )
+from app.services.confluence import compute_confluence
 
 ALLOWED_TF = {"1m","5m","15m","30m","1h","2h","4h","6h","12h","d","w","m"}
 
@@ -317,3 +318,69 @@ async def api_zones(
     if not zones:
         raise HTTPException(status_code=404, detail="zones unavailable")
     return {"symbol": sym, "timeframe": timeframe, "zones": zones}
+
+
+# ---------- CHART BUNDLE ----------
+@app.get("/api/chart")
+async def api_chart(
+    symbol: str = Query(...),
+    timeframe: str = Query("1h"),
+    limit: int = Query(500, ge=100, le=1000),
+    include_confluence: bool = Query(True),
+):
+    from app.clients.bybit_client import fetch_klines
+    sym = re.sub(r'[^A-Z0-9]', '', (symbol or "BTCUSDT").upper())
+    df = await fetch_klines(sym, timeframe, limit=limit)
+    data = compute_indicators(df, IndicatorParams())
+    fib = compute_fib_031(data)
+    zones = approximate_zones(data)
+    conf = compute_confluence(data) if include_confluence else None
+    # serialize a compact structure for the frontend
+    ohlcv = [
+        [
+            int(row["open_time"].value // 10**6),
+            float(row["open"]), float(row["high"]), float(row["low"]), float(row["close"]), float(row["volume"])
+        ] for _, row in data.iterrows()
+    ]
+    ind_tail = data.tail(1).iloc[0]
+    indicators = {
+        "ema": {
+            "fast": float(ind_tail.get("ema_fast", float('nan'))),
+            "mid": float(ind_tail.get("ema_mid", float('nan'))),
+            "slow": float(ind_tail.get("ema_slow", float('nan'))),
+        },
+        "macd": {
+            "macd": float(ind_tail.get("macd", float('nan'))),
+            "signal": float(ind_tail.get("macd_signal", float('nan'))),
+        },
+        "stoch": {
+            "k": float(ind_tail.get("stoch_k", float('nan'))),
+            "d": float(ind_tail.get("stoch_d", float('nan'))),
+        },
+        "atr": float(ind_tail.get("atr", float('nan'))),
+        "mfi": float(ind_tail.get("mfi", float('nan'))),
+        "cmf": float(ind_tail.get("cmf", float('nan'))),
+    }
+    return {
+        "symbol": sym,
+        "timeframe": timeframe,
+        "ohlcv": ohlcv,
+        "fib031": fib,
+        "zones": zones,
+        "indicators": indicators,
+        "confluence": None if not conf else {
+            "score": conf.score,
+            "label": conf.label,
+            "reasons": conf.reasons,
+        }
+    }
+
+
+# ---------- MACRO ----------
+@app.get("/api/macro")
+async def api_macro(metric: str = Query(..., pattern="^(cpi|unemployment|interest)$")):
+    from app.clients.macro_client import get_macro
+    data = await get_macro(metric)
+    if not data:
+        return JSONResponse({"metric": metric, "source": None, "value": None}, status_code=204)
+    return data

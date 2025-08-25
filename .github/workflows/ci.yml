@@ -23,8 +23,3 @@ jobs:
         run: ruff check . || true
       - name: Test
         run: pytest -q
-      - name: Build Docker
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: false

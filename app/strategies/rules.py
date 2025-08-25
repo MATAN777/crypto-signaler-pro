@@ -2,20 +2,11 @@
 from __future__ import annotations
 
 import pandas as pd
-from app.indicators.ta import IndicatorParams
+from app.indicators.ta import IndicatorParams, last_cross
 
 def _last_cross(a: pd.Series, b: pd.Series) -> int:
-    if len(a) < 2 or len(b) < 2:
-        return 0
-    prev = (a.iloc[-2] - b.iloc[-2])
-    curr = (a.iloc[-1] - b.iloc[-1])
-    if pd.isna(prev) or pd.isna(curr):
-        return 0
-    if prev <= 0 and curr > 0:
-        return 1
-    if prev >= 0 and curr < 0:
-        return -1
-    return 0
+    # backward-compat wrapper; prefer importing last_cross from indicators.ta
+    return last_cross(a, b)
 
 def make_signal(
     df: pd.DataFrame,

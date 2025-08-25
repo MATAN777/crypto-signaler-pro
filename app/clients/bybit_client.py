@@ -1,5 +1,5 @@
-import httpx
 import pandas as pd
+from app.services.http_client import get_http_client
 
 BASE_URL = "https://api.bybit.com"
 INTERVAL_MAP = {
@@ -15,16 +15,16 @@ async def fetch_klines(symbol: str, interval: str, limit: int = 400) -> pd.DataF
     bybit_int = to_bybit_interval(interval)
     url = f"{BASE_URL}/v5/market/kline"
     params = {"category":"linear","symbol":symbol,"interval":bybit_int,"limit":min(limit,1000)}
-    async with httpx.AsyncClient(timeout=30) as client:
+    client = await get_http_client()
+    r = await client.get(url, params=params)
+    data = r.json()
+    if r.status_code != 200 or data.get("retCode") != 0:
+        params["category"] = "spot"
         r = await client.get(url, params=params)
+        r.raise_for_status()
         data = r.json()
-        if r.status_code != 200 or data.get("retCode") != 0:
-            params["category"] = "spot"
-            r = await client.get(url, params=params)
-            r.raise_for_status()
-            data = r.json()
-            if data.get("retCode") != 0:
-                raise RuntimeError(f"Bybit error: {data}")
+        if data.get("retCode") != 0:
+            raise RuntimeError(f"Bybit error: {data}")
     rows = list(reversed(data["result"]["list"]))
     df = pd.DataFrame(rows, columns=["open_time","open","high","low","close","volume","turnover"])
     df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")

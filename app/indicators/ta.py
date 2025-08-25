@@ -20,6 +20,8 @@ class IndicatorParams:
     macd_fast: int = 12
     macd_slow: int = 26
     macd_signal: int = 9
+    mfi_len: int = 14
+    cmf_len: int = 20
 
 
 # ---------- Utils ----------
@@ -44,6 +46,47 @@ def _atr(df: pd.DataFrame, length: int = 14) -> pd.Series:
     lc = (df["low"] - df["close"].shift()).abs()
     tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
     return tr.ewm(alpha=1/length, adjust=False).mean()
+
+
+def last_cross(a: pd.Series, b: pd.Series) -> int:
+    """Return 1 if a crossed above b on the last bar, -1 if crossed below, else 0."""
+    if len(a) < 2 or len(b) < 2:
+        return 0
+    prev = (a.iloc[-2] - b.iloc[-2])
+    curr = (a.iloc[-1] - b.iloc[-1])
+    if pd.isna(prev) or pd.isna(curr):
+        return 0
+    if prev <= 0 and curr > 0:
+        return 1
+    if prev >= 0 and curr < 0:
+        return -1
+    return 0
+
+
+def _mfi(df: pd.DataFrame, length: int = 14) -> pd.Series:
+    # Money Flow Index based on typical price and volume
+    tp = (df["high"] + df["low"] + df["close"]) / 3.0
+    mf = tp * df["volume"]
+    up = tp > tp.shift(1)
+    down = tp < tp.shift(1)
+    pos_mf = mf.where(up, 0.0)
+    neg_mf = mf.where(down, 0.0)
+    pos_sum = pos_mf.rolling(length, min_periods=length).sum()
+    neg_sum = neg_mf.rolling(length, min_periods=length).sum()
+    denom = (pos_sum + neg_sum).replace(0, np.nan)
+    mfi = 100.0 * (pos_sum / denom)
+    return mfi.clip(0, 100)
+
+
+def _cmf(df: pd.DataFrame, length: int = 20) -> pd.Series:
+    # Chaikin Money Flow
+    hl_range = (df["high"] - df["low"]).replace(0, np.nan)
+    mfm = ((df["close"] - df["low"]) - (df["high"] - df["close"])) / hl_range
+    mfv = mfm.fillna(0.0) * df["volume"]
+    mfv_sum = mfv.rolling(length, min_periods=length).sum()
+    vol_sum = df["volume"].rolling(length, min_periods=length).sum().replace(0, np.nan)
+    cmf = mfv_sum / vol_sum
+    return cmf
 
 
 # ---------- Core indicators ----------
@@ -72,6 +115,16 @@ def compute_indicators(df: pd.DataFrame, p: IndicatorParams) -> pd.DataFrame:
 
     # ATR
     data["atr"] = _atr(data, 14)
+
+    # Money Flow indicators
+    try:
+        data["mfi"] = _mfi(data, getattr(p, "mfi_len", 14))
+    except Exception:
+        data["mfi"] = np.nan
+    try:
+        data["cmf"] = _cmf(data, getattr(p, "cmf_len", 20))
+    except Exception:
+        data["cmf"] = np.nan
 
     return data
 
