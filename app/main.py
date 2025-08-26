@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from dotenv import load_dotenv
+load_dotenv()
 
 from app.services.settings_store import load_settings, save_settings
 from app.indicators.ta import (
@@ -138,33 +140,22 @@ async def put_settings(
 # ---------- Helper: infer reasons if strategy didn't return ----------
 def _infer_reasons(df) -> List[str]:
     reasons: List[str] = []
-    if df is None or len(df) == 0:
-        return reasons
-    last = df.iloc[-1]
-    prev = df.iloc[-2] if len(df) > 1 else None
     cols = set(df.columns)
+    last = df.tail(1).iloc[0] if not df.empty else None
+    prev = df.tail(2).iloc[0] if len(df) >= 2 else None
 
-    if {"ema_fast","ema_mid","ema_slow"}.issubset(cols):
-        try:
-            if last["ema_fast"] > last["ema_mid"] > last["ema_slow"]:
-                reasons.append("EMA structure up (35>75>200)")
-            elif last["ema_fast"] < last["ema_mid"] < last["ema_slow"]:
-                reasons.append("EMA structure down (35<75<200)")
-        except Exception:
-            pass
+    if {"ema_fast","ema_mid","ema_slow"}.issubset(cols) and last is not None:
+        if last["ema_fast"] > last["ema_mid"] > last["ema_slow"]:
+            reasons.append("EMA alignment up")
+        if last["ema_fast"] < last["ema_mid"] < last["ema_slow"]:
+            reasons.append("EMA alignment down")
 
-    if {"close","ema_mid"}.issubset(cols):
+    if {"macd","macd_signal"}.issubset(cols) and last is not None:
         try:
-            if last["close"] > last["ema_mid"]:
-                reasons.append("Price > EMA75")
+            if last["macd"] > last["macd_signal"]:
+                reasons.append("MACD above signal")
             else:
-                reasons.append("Price < EMA75")
-        except Exception:
-            pass
-
-    if {"macd","macd_signal"}.issubset(cols):
-        try:
-            reasons.append("MACD > signal" if last["macd"] > last["macd_signal"] else "MACD < signal")
+                reasons.append("MACD below signal")
         except Exception:
             pass
 
