@@ -5,7 +5,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[2]
 from typing import Optional, Dict, Any
 
-DEFAULT_PATH = os.getenv("SETTINGS_PATH", str(BASE_DIR / "data" / "settings.json"))
+DEFAULT_PATH = os.getenv("SETTINGS_PATH", str(BASE_DIR / "runtime-data" / "settings.json"))
 
 def _ensure_dir(path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
