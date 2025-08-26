@@ -42,3 +42,30 @@ PORT=7000
 ```
 
 > אם תרצה Bitget במקום Bybit — מחליפים קלות את `clients/bybit_client.py`.
+
+## Docker (build & run anywhere)
+```bash
+docker build -t crypto-signaler-pro .
+# run with .env
+docker run -it --rm -p 7000:7000 --env-file .env crypto-signaler-pro
+# or pass envs inline
+# docker run -it --rm -p 7000:7000 \
+#   -e DEFAULT_SYMBOL=BTCUSDT -e TIMEFRAMES="15m,1h,4h,d,w" -e RISK_REWARD=3.0 \
+#   -e FRED_API_KEY=YOUR_KEY \
+#   crypto-signaler-pro
+```
+Open: http://127.0.0.1:7000
+
+Endpoints:
+- GET `/api/health`
+- GET `/api/settings`, PUT `/api/settings?persist=true|false`
+- GET `/api/analyze?symbol=BTCUSDT&timeframe=1h`
+- GET `/api/fib031?symbol=BTCUSDT&timeframe=1h`
+- GET `/api/zones?symbol=BTCUSDT&timeframe=1h`
+- GET `/api/chart?symbol=BTCUSDT&timeframe=1h`  (candles+indicators+zones+fib+confluence)
+- GET `/api/macro?metric=cpi|unemployment|interest`
+
+Troubleshooting:
+- No data? The app now has a synthetic OHLC fallback when the external API is unreachable, so UI stays functional offline.
+- Change port: `-e PORT=8080 -p 8080:8080`
+- Missing FRED API key: macro endpoint returns 204 (no content).
