@@ -233,44 +233,61 @@ async def analyze(
         macd_fast=macd_f, macd_slow=macd_s, macd_signal=macd_sig
     )
 
-    # נתונים + אינדיקטורים
-    df = await fetch_klines(sym, timeframe, limit=limit)
-    data = compute_indicators(df, params)
-
-    # אסטרטגיה
     try:
-        sig = make_signal(
-            data, timeframe, params,
-            risk_reward=rr, decision_threshold=s.decision_threshold
-        )
-    except TypeError:
-        # תאימות אם make_signal לא מכירה decision_threshold
-        sig = make_signal(data, timeframe, params, risk_reward=rr)
+        # נתונים + אינדיקטורים
+        df = await fetch_klines(sym, timeframe, limit=limit)
+        data = compute_indicators(df, params)
 
-    # Reasons fallback
-    if isinstance(sig, dict) and not sig.get("reasons"):
-        inferred = _infer_reasons(data)
-        if inferred:
-            sig.setdefault("metadata", {})
-            sig["metadata"]["reasons"] = inferred
+        # אסטרטגיה
+        try:
+            sig = make_signal(
+                data, timeframe, params,
+                risk_reward=rr, decision_threshold=s.decision_threshold
+            )
+        except TypeError:
+            # תאימות אם make_signal לא מכירה decision_threshold
+            sig = make_signal(data, timeframe, params, risk_reward=rr)
 
-    result = {
-        "symbol": sym,
-        "timeframe": timeframe,
-        "params": params.__dict__,
-        "decision_threshold": s.decision_threshold,
-        "signal": sig,
-    }
+        # Reasons fallback
+        if isinstance(sig, dict) and not sig.get("reasons"):
+            inferred = _infer_reasons(data)
+            if inferred:
+                sig.setdefault("metadata", {})
+                sig["metadata"]["reasons"] = inferred
 
-    # אופציונלי: גם פיבונאצ'י
-    if fib031:
-        fib = compute_fib_031(data)
-        if fib:
-            entry_sugg = suggest_entry_from_fib(fib, rr)
-            result["fib031"] = fib
-            result["entry_suggestion"] = entry_sugg
+        result = {
+            "symbol": sym,
+            "timeframe": timeframe,
+            "params": params.__dict__,
+            "decision_threshold": s.decision_threshold,
+            "signal": sig,
+        }
 
-    return result
+        # אופציונלי: גם פיבונאצ'י
+        if fib031:
+            fib = compute_fib_031(data)
+            if fib:
+                entry_sugg = suggest_entry_from_fib(fib, rr)
+                result["fib031"] = fib
+                result["entry_suggestion"] = entry_sugg
+        return result
+    except Exception:
+        # Fallback: החזר תשובה ידידותית ל-UI במקום 500
+        return {
+            "symbol": sym,
+            "timeframe": timeframe,
+            "params": params.__dict__,
+            "decision_threshold": s.decision_threshold,
+            "signal": {
+                "timeframe": timeframe,
+                "side": "NEUTRAL",
+                "confidence": 0.0,
+                "entry": None,
+                "target": None,
+                "metadata": {"reasons": ["data fetch failed or unavailable"]},
+            },
+            "note": "analyze fallback"
+        }
 
 
 # ---------- FIB 0.31 ----------
@@ -286,19 +303,21 @@ async def api_fib031(
     sym = (symbol or s.symbol or "BTCUSDT").upper()
     sym = re.sub(r'[^A-Z0-9]', '', sym)
 
-    df = await fetch_klines(sym, timeframe, limit=limit)
-    data = compute_indicators(df, IndicatorParams())
-    fib = compute_fib_031(data)
-    if not fib:
-        raise HTTPException(status_code=404, detail="not enough data for fib 0.31")
-
-    entry_sugg = suggest_entry_from_fib(fib, s.risk_reward)
-    return {
-        "symbol": sym,
-        "timeframe": timeframe,
-        "fib031": fib,
-        "entry_suggestion": entry_sugg,
-    }
+    try:
+        df = await fetch_klines(sym, timeframe, limit=limit)
+        data = compute_indicators(df, IndicatorParams())
+        fib = compute_fib_031(data)
+        if not fib:
+            return {"symbol": sym, "timeframe": timeframe, "fib031": None, "entry_suggestion": None}
+        entry_sugg = suggest_entry_from_fib(fib, s.risk_reward)
+        return {
+            "symbol": sym,
+            "timeframe": timeframe,
+            "fib031": fib,
+            "entry_suggestion": entry_sugg,
+        }
+    except Exception:
+        return {"symbol": sym, "timeframe": timeframe, "fib031": None, "entry_suggestion": None, "note": "fib031 fallback"}
 
 
 # ---------- Demand / Supply ----------
@@ -312,12 +331,15 @@ async def api_zones(
 
     sym = symbol.upper()
     sym = re.sub(r'[^A-Z0-9]', '', sym)
-    df = await fetch_klines(sym, timeframe, limit=limit)
-    data = compute_indicators(df, IndicatorParams())
-    zones = approximate_zones(data)
-    if not zones:
-        raise HTTPException(status_code=404, detail="zones unavailable")
-    return {"symbol": sym, "timeframe": timeframe, "zones": zones}
+    try:
+        df = await fetch_klines(sym, timeframe, limit=limit)
+        data = compute_indicators(df, IndicatorParams())
+        zones = approximate_zones(data)
+        if not zones:
+            return {"symbol": sym, "timeframe": timeframe, "zones": None}
+        return {"symbol": sym, "timeframe": timeframe, "zones": zones}
+    except Exception:
+        return {"symbol": sym, "timeframe": timeframe, "zones": None, "note": "zones fallback"}
 
 
 # ---------- CHART BUNDLE ----------
@@ -330,57 +352,72 @@ async def api_chart(
 ):
     from app.clients.bybit_client import fetch_klines
     sym = re.sub(r'[^A-Z0-9]', '', (symbol or "BTCUSDT").upper())
-    df = await fetch_klines(sym, timeframe, limit=limit)
-    data = compute_indicators(df, IndicatorParams())
-    fib = compute_fib_031(data)
-    zones = approximate_zones(data)
-    conf = compute_confluence(data) if include_confluence else None
-    # serialize a compact structure for the frontend
-    ohlcv = [
-        [
-            int(row["open_time"].value // 10**6),
-            float(row["open"]), float(row["high"]), float(row["low"]), float(row["close"]), float(row["volume"])
-        ] for _, row in data.iterrows()
-    ]
-    ind_tail = data.tail(1).iloc[0]
-    indicators = {
-        "ema": {
-            "fast": float(ind_tail.get("ema_fast", float('nan'))),
-            "mid": float(ind_tail.get("ema_mid", float('nan'))),
-            "slow": float(ind_tail.get("ema_slow", float('nan'))),
-        },
-        "macd": {
-            "macd": float(ind_tail.get("macd", float('nan'))),
-            "signal": float(ind_tail.get("macd_signal", float('nan'))),
-        },
-        "stoch": {
-            "k": float(ind_tail.get("stoch_k", float('nan'))),
-            "d": float(ind_tail.get("stoch_d", float('nan'))),
-        },
-        "atr": float(ind_tail.get("atr", float('nan'))),
-        "mfi": float(ind_tail.get("mfi", float('nan'))),
-        "cmf": float(ind_tail.get("cmf", float('nan'))),
-    }
-    return {
-        "symbol": sym,
-        "timeframe": timeframe,
-        "ohlcv": ohlcv,
-        "fib031": fib,
-        "zones": zones,
-        "indicators": indicators,
-        "confluence": None if not conf else {
-            "score": conf.score,
-            "label": conf.label,
-            "reasons": conf.reasons,
+    try:
+        df = await fetch_klines(sym, timeframe, limit=limit)
+        data = compute_indicators(df, IndicatorParams())
+        fib = compute_fib_031(data)
+        zones = approximate_zones(data)
+        conf = compute_confluence(data) if include_confluence else None
+        # serialize a compact structure for the frontend
+        ohlcv = [
+            [
+                int(row["open_time"].value // 10**6),
+                float(row["open"]), float(row["high"]), float(row["low"]), float(row["close"]), float(row["volume"])
+            ] for _, row in data.iterrows()
+        ]
+        ind_tail = data.tail(1).iloc[0]
+        indicators = {
+            "ema": {
+                "fast": float(ind_tail.get("ema_fast", float('nan'))),
+                "mid": float(ind_tail.get("ema_mid", float('nan'))),
+                "slow": float(ind_tail.get("ema_slow", float('nan'))),
+            },
+            "macd": {
+                "macd": float(ind_tail.get("macd", float('nan'))),
+                "signal": float(ind_tail.get("macd_signal", float('nan'))),
+            },
+            "stoch": {
+                "k": float(ind_tail.get("stoch_k", float('nan'))),
+                "d": float(ind_tail.get("stoch_d", float('nan'))),
+            },
+            "atr": float(ind_tail.get("atr", float('nan'))),
+            "mfi": float(ind_tail.get("mfi", float('nan'))),
+            "cmf": float(ind_tail.get("cmf", float('nan'))),
         }
-    }
+        return {
+            "symbol": sym,
+            "timeframe": timeframe,
+            "ohlcv": ohlcv,
+            "fib031": fib,
+            "zones": zones,
+            "indicators": indicators,
+            "confluence": None if not conf else {
+                "score": conf.score,
+                "label": conf.label,
+                "reasons": conf.reasons,
+            }
+        }
+    except Exception:
+        return {
+            "symbol": sym,
+            "timeframe": timeframe,
+            "ohlcv": [],
+            "fib031": None,
+            "zones": None,
+            "indicators": None,
+            "confluence": None,
+            "note": "chart fallback"
+        }
 
 
 # ---------- MACRO ----------
 @app.get("/api/macro")
 async def api_macro(metric: str = Query(..., pattern="^(cpi|unemployment|interest)$")):
     from app.clients.macro_client import get_macro
-    data = await get_macro(metric)
-    if not data:
-        return JSONResponse({"metric": metric, "source": None, "value": None}, status_code=204)
-    return data
+    try:
+        data = await get_macro(metric)
+        if not data:
+            return {"metric": metric, "source": None, "value": None}
+        return data
+    except Exception:
+        return {"metric": metric, "source": None, "value": None, "note": "macro fallback"}
