@@ -1,7 +1,7 @@
+import asyncio
 import pandas as pd
-from app.services.http_client import get_http_client
+from app.services.bybit_session import get_bybit_http
 
-BASE_URL = "https://api.bybit.com"
 INTERVAL_MAP = {
     "1m":"1","3m":"3","5m":"5","15m":"15","30m":"30",
     "1h":"60","2h":"120","4h":"240","6h":"360","12h":"720",
@@ -11,20 +11,26 @@ INTERVAL_MAP = {
 def to_bybit_interval(interval: str) -> str:
     return INTERVAL_MAP.get(interval.lower(), interval)
 
+async def _get_kline(category: str, symbol: str, interval: str, limit: int):
+    session = get_bybit_http()
+    def _call():
+        return session.get_kline(
+            category=category,
+            symbol=symbol,
+            interval=interval,
+            limit=min(limit, 1000),
+        )
+    return await asyncio.to_thread(_call)
+
 async def fetch_klines(symbol: str, interval: str, limit: int = 400) -> pd.DataFrame:
     bybit_int = to_bybit_interval(interval)
-    url = f"{BASE_URL}/v5/market/kline"
-    params = {"category":"linear","symbol":symbol,"interval":bybit_int,"limit":min(limit,1000)}
-    client = await get_http_client()
-    r = await client.get(url, params=params)
-    data = r.json()
-    if r.status_code != 200 or data.get("retCode") != 0:
-        params["category"] = "spot"
-        r = await client.get(url, params=params)
-        r.raise_for_status()
-        data = r.json()
-        if data.get("retCode") != 0:
+
+    data = await _get_kline("linear", symbol, bybit_int, limit)
+    if not isinstance(data, dict) or data.get("retCode") != 0:
+        data = await _get_kline("spot", symbol, bybit_int, limit)
+        if not isinstance(data, dict) or data.get("retCode") != 0:
             raise RuntimeError(f"Bybit error: {data}")
+
     rows = list(reversed(data["result"]["list"]))
     df = pd.DataFrame(rows, columns=["open_time","open","high","low","close","volume","turnover"])
     df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")

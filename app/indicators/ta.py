@@ -49,18 +49,26 @@ def _atr(df: pd.DataFrame, length: int = 14) -> pd.Series:
 
 
 def last_cross(a: pd.Series, b: pd.Series) -> int:
-    """Return 1 if a crossed above b on the last bar, -1 if crossed below, else 0."""
+    """Return 1 if the last crossing was up, -1 if down, else 0.
+
+    Scans the series to find the most recent index where the sign of (a-b)
+    changed across zero. Returns +1 for a cross up (prev<=0 and curr>0),
+    -1 for a cross down (prev>=0 and curr<0), or 0 if no crossing occurred.
+    """
     if len(a) < 2 or len(b) < 2:
         return 0
-    prev = (a.iloc[-2] - b.iloc[-2])
-    curr = (a.iloc[-1] - b.iloc[-1])
-    if pd.isna(prev) or pd.isna(curr):
-        return 0
-    if prev <= 0 and curr > 0:
-        return 1
-    if prev >= 0 and curr < 0:
-        return -1
-    return 0
+    last_dir = 0
+    diff = a - b
+    for i in range(1, len(diff)):
+        prev = diff.iloc[i-1]
+        curr = diff.iloc[i]
+        if pd.isna(prev) or pd.isna(curr):
+            continue
+        if prev <= 0 and curr > 0:
+            last_dir = 1
+        elif prev >= 0 and curr < 0:
+            last_dir = -1
+    return last_dir
 
 
 def _mfi(df: pd.DataFrame, length: int = 14) -> pd.Series:
