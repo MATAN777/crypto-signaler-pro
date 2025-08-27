@@ -1,0 +1,49 @@
+Linux / MacOS
+#!/bin/bash
+# Kill all running containers, remove them, then start a new uvicorn container
+
+# Variables
+IMAGE_ID="541ba78e6090"
+HOST_PORT=7000
+CONTAINER_PORT=7000
+
+echo "🛑 Stopping ALL containers..."
+docker stop $(docker ps -aq) 2>/dev/null || true
+
+echo "🗑️ Removing ALL containers..."
+docker rm $(docker ps -aq) 2>/dev/null || true
+
+echo "🚀 Starting new uvicorn container..."
+docker run -d \
+  --name uvicorn_app \
+  -p $HOST_PORT:$CONTAINER_PORT \
+  $IMAGE_ID
+
+echo "📜 Attaching to logs..."
+docker logs -f uvicorn_app
+
+Windows - PowerShell
+
+# run_uvicorn_clean.ps1
+# Stop and remove ALL containers, then start a new one
+
+# Variables
+$ImageId = "541ba78e6090"
+$HostPort = 7000
+$ContainerPort = 7000
+$ContainerName = "uvicorn_app"
+
+Write-Host "🛑 Stopping ALL containers..."
+docker stop $(docker ps -aq) 2>$null
+
+Write-Host "🗑️ Removing ALL containers..."
+docker rm $(docker ps -aq) 2>$null
+
+Write-Host "🚀 Starting new uvicorn container..."
+docker run -d `
+  --name $ContainerName `
+  -p "$HostPort`:$ContainerPort" `
+  $ImageId
+
+Write-Host "📜 Attaching to logs..."
+docker logs -f $ContainerName
