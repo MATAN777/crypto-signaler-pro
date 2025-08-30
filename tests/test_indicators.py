@@ -1,5 +1,6 @@
 import pandas as pd
 from app.indicators.ta import last_cross
+
 def test_last_cross():
     fast = pd.Series([1,2,3,4])
     slow = pd.Series([2,2,2,3])

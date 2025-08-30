@@ -1,4 +1,3 @@
-# app/main.py
 from __future__ import annotations
 
 import os, re
@@ -19,6 +18,7 @@ from app.indicators.ta import (
     approximate_zones,
 )
 
+# ---------------- Constants ----------------
 ALLOWED_TF = {"1m","5m","15m","30m","1h","2h","4h","6h","12h","d","w","m"}
 
 # ---------------- Models ----------------
@@ -30,7 +30,6 @@ class SettingsModel(BaseModel):
     stoch: List[int] = [14, 14, 3, 3]    # rsi_len, stoch_len, k, d
     macd:  List[int] = [12, 26, 9]       # fast, slow, signal
     decision_threshold: float = 1.5
-
 
 # ---------------- Utils ----------------
 def _validate_settings(s: SettingsModel):
@@ -54,10 +53,8 @@ def _validate_settings(s: SettingsModel):
     if not (0.5 <= s.decision_threshold <= 5):
         raise ValueError("decision_threshold must be between 0.5 and 5")
 
-
 def _csv_ints(s: str) -> List[int]:
     return [int(x.strip()) for x in (s or "").split(",") if x.strip()]
-
 
 def _load_initial_settings() -> SettingsModel:
     file_cfg = load_settings() or {}
@@ -73,7 +70,6 @@ def _load_initial_settings() -> SettingsModel:
             pass
     base = {**file_cfg, **env}
     return SettingsModel(**base)
-
 
 # ---------------- App ----------------
 app = FastAPI(title="Crypto Signaler PRO", version="1.0")
@@ -91,17 +87,14 @@ if os.path.isdir(_static_dir):
 app.state.settings = _load_initial_settings()
 AUTH_TOKEN = os.getenv("AUTH_TOKEN")
 
-
 def _require_auth_if_configured(request: Request):
     if AUTH_TOKEN and request.headers.get("Authorization") != f"Bearer {AUTH_TOKEN}":
         raise HTTPException(status_code=401, detail="Unauthorized")
-
 
 # ---------------- Routes ----------------
 @app.get("/api/health")
 async def health():
     return {"ok": True}
-
 
 @app.get("/")
 async def root():
@@ -110,11 +103,9 @@ async def root():
         return FileResponse(index_path)
     return JSONResponse({"message": "UI not found (app/static/index.html)."}, status_code=200)
 
-
 @app.get("/api/settings")
 async def get_settings():
     return app.state.settings
-
 
 @app.put("/api/settings")
 async def put_settings(
@@ -133,63 +124,17 @@ async def put_settings(
         save_settings(payload.dict())
     return {"ok": True}
 
-
-# ---------- Helper: infer reasons if strategy didn't return ----------
-def _infer_reasons(df) -> List[str]:
-    reasons: List[str] = []
-    if df is None or len(df) == 0:
-        return reasons
-    last = df.iloc[-1]
-    prev = df.iloc[-2] if len(df) > 1 else None
-    cols = set(df.columns)
-
-    if {"ema_fast","ema_mid","ema_slow"}.issubset(cols):
-        try:
-            if last["ema_fast"] > last["ema_mid"] > last["ema_slow"]:
-                reasons.append("EMA structure up (35>75>200)")
-            elif last["ema_fast"] < last["ema_mid"] < last["ema_slow"]:
-                reasons.append("EMA structure down (35<75<200)")
-        except Exception:
-            pass
-
-    if {"close","ema_mid"}.issubset(cols):
-        try:
-            if last["close"] > last["ema_mid"]:
-                reasons.append("Price > EMA75")
-            else:
-                reasons.append("Price < EMA75")
-        except Exception:
-            pass
-
-    if {"macd","macd_signal"}.issubset(cols):
-        try:
-            reasons.append("MACD > signal" if last["macd"] > last["macd_signal"] else "MACD < signal")
-        except Exception:
-            pass
-
-    if {"stoch_k","stoch_d"}.issubset(cols) and prev is not None:
-        try:
-            if last["stoch_k"] > last["stoch_d"] and prev["stoch_k"] <= prev["stoch_d"]:
-                reasons.append("Stoch K cross up")
-            if last["stoch_k"] < last["stoch_d"] and prev["stoch_k"] >= prev["stoch_d"]:
-                reasons.append("Stoch K cross down")
-        except Exception:
-            pass
-
-    return reasons
-
-
 # ---------- ANALYZE ----------
 @app.get("/api/analyze")
 async def analyze(
     symbol: Optional[str] = Query(None),
     timeframe: str = Query("4h"),
     ema: Optional[str] = Query(None),
-    stoch: Optional[str] = Query(None),  # 1/3/4 values supported
+    stoch: Optional[str] = Query(None),
     macd: Optional[str] = Query(None),
     risk_reward: Optional[float] = Query(None),
     limit: int = Query(500, ge=100, le=1000),
-    fib031: bool = Query(False),  # אם רוצים להחזיר גם פיבו באותה תשובה
+    fib031: bool = Query(False),
 ):
     from app.clients.bybit_client import fetch_klines
     from app.strategies.rules import make_signal
@@ -199,13 +144,11 @@ async def analyze(
     sym = re.sub(r'[^A-Z0-9]', '', sym)
     rr  = risk_reward if risk_reward is not None else s.risk_reward
 
-    # EMA
     ema_vals = s.ema if ema is None else _csv_ints(ema)
     if len(ema_vals) != 3:
         raise HTTPException(status_code=422, detail="ema must be 'fast,mid,slow'")
     ema_f, ema_m, ema_s = ema_vals
 
-    # StochRSI
     if stoch is None:
         rsi_len, stoch_len, k_len, d_len = s.stoch
     else:
@@ -220,7 +163,6 @@ async def analyze(
         else:
             raise HTTPException(status_code=422, detail="stoch must be 'RSI' or 'RSI,Stoch,K,D'")
 
-    # MACD
     macd_vals = s.macd if macd is None else _csv_ints(macd)
     if len(macd_vals) != 3:
         raise HTTPException(status_code=422, detail="macd must be 'fast,slow,signal'")
@@ -232,26 +174,11 @@ async def analyze(
         macd_fast=macd_f, macd_slow=macd_s, macd_signal=macd_sig
     )
 
-    # נתונים + אינדיקטורים
     df = await fetch_klines(sym, timeframe, limit=limit)
     data = compute_indicators(df, params)
 
-    # אסטרטגיה
-    try:
-        sig = make_signal(
-            data, timeframe, params,
-            risk_reward=rr, decision_threshold=s.decision_threshold
-        )
-    except TypeError:
-        # תאימות אם make_signal לא מכירה decision_threshold
-        sig = make_signal(data, timeframe, params, risk_reward=rr)
-
-    # Reasons fallback
-    if isinstance(sig, dict) and not sig.get("reasons"):
-        inferred = _infer_reasons(data)
-        if inferred:
-            sig.setdefault("metadata", {})
-            sig["metadata"]["reasons"] = inferred
+    from app.strategies.rules import make_signal
+    sig = make_signal(data, timeframe, params, risk_reward=rr, decision_threshold=s.decision_threshold)
 
     result = {
         "symbol": sym,
@@ -261,7 +188,6 @@ async def analyze(
         "signal": sig,
     }
 
-    # אופציונלי: גם פיבונאצ'י
     if fib031:
         fib = compute_fib_031(data)
         if fib:
@@ -271,16 +197,10 @@ async def analyze(
 
     return result
 
-
 # ---------- FIB 0.31 ----------
 @app.get("/api/fib031")
-async def api_fib031(
-    symbol: str = Query(...),
-    timeframe: str = Query("1h"),
-    limit: int = Query(500, ge=100, le=1000),
-):
+async def api_fib031(symbol: str = Query(...), timeframe: str = Query("1h"), limit: int = Query(500, ge=100, le=1000)):
     from app.clients.bybit_client import fetch_klines
-
     s = app.state.settings
     sym = (symbol or s.symbol or "BTCUSDT").upper()
     sym = re.sub(r'[^A-Z0-9]', '', sym)
@@ -290,25 +210,13 @@ async def api_fib031(
     fib = compute_fib_031(data)
     if not fib:
         raise HTTPException(status_code=404, detail="not enough data for fib 0.31")
-
     entry_sugg = suggest_entry_from_fib(fib, s.risk_reward)
-    return {
-        "symbol": sym,
-        "timeframe": timeframe,
-        "fib031": fib,
-        "entry_suggestion": entry_sugg,
-    }
-
+    return {"symbol": sym, "timeframe": timeframe, "fib031": fib, "entry_suggestion": entry_sugg}
 
 # ---------- Demand / Supply ----------
 @app.get("/api/zones")
-async def api_zones(
-    symbol: str = Query(...),
-    timeframe: str = Query("1h"),
-    limit: int = Query(500, ge=100, le=1000),
-):
+async def api_zones(symbol: str = Query(...), timeframe: str = Query("1h"), limit: int = Query(500, ge=100, le=1000)):
     from app.clients.bybit_client import fetch_klines
-
     sym = symbol.upper()
     sym = re.sub(r'[^A-Z0-9]', '', sym)
     df = await fetch_klines(sym, timeframe, limit=limit)
@@ -317,3 +225,16 @@ async def api_zones(
     if not zones:
         raise HTTPException(status_code=404, detail="zones unavailable")
     return {"symbol": sym, "timeframe": timeframe, "zones": zones}
+
+# ---------------- Scheduler Startup ----------------
+from app.scheduler import configure_scheduler
+
+@app.on_event("startup")
+async def _start_scheduler():
+    s = app.state.settings
+    params = IndicatorParams(
+        ema_fast=s.ema[0], ema_mid=s.ema[1], ema_slow=s.ema[2],
+        rsi_len=s.stoch[0], stoch_len=s.stoch[1], stoch_k=s.stoch[2], stoch_d=s.stoch[3],
+        macd_fast=s.macd[0], macd_slow=s.macd[1], macd_signal=s.macd[2],
+    )
+    configure_scheduler(app.state, params)

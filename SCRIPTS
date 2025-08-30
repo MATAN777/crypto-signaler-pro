@@ -22,28 +22,38 @@ docker run -d \
 echo "📜 Attaching to logs..."
 docker logs -f uvicorn_app
 
-Windows - PowerShell
+Runing Linux container on Windows - PowerShell!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# run_uvicorn_clean.ps1
-# Stop and remove ALL containers, then start a new one
+# === CONFIG ===
+$env:TELEGRAM_BOT_TOKEN = "8203351641:AAGRz813XLXXcVk_IM9cl2W02dB5F00ymeU"
+$env:TELEGRAM_CHAT_ID   = "819529484"
+$DataPath = "$PWD\data"
 
-# Variables
-$ImageId = "541ba78e6090"
-$HostPort = 7000
-$ContainerPort = 7000
-$ContainerName = "uvicorn_app"
+# Create data dir if missing
+if (!(Test-Path $DataPath)) { New-Item -ItemType Directory -Path $DataPath | Out-Null }
 
-Write-Host "🛑 Stopping ALL containers..."
-docker stop $(docker ps -aq) 2>$null
+# === BUILD IMAGE ===
+docker build -t crypto-signaler:latest .
 
-Write-Host "🗑️ Removing ALL containers..."
-docker rm $(docker ps -aq) 2>$null
+# === STOP OLD CONTAINER ===
+docker rm -f uvicorn_app 2>$null
 
-Write-Host "🚀 Starting new uvicorn container..."
+# === RUN NEW CONTAINER ===
 docker run -d `
-  --name $ContainerName `
-  -p "$HostPort`:$ContainerPort" `
-  $ImageId
+  --name uvicorn_app `
+  -p 127.0.0.1:7000:7000 `
+  -e TELEGRAM_BOT_TOKEN="$env:TELEGRAM_BOT_TOKEN" `
+  -e TELEGRAM_CHAT_ID="$env:TELEGRAM_CHAT_ID" `
+  -e SIGNAL_STATE_PATH="/app/data/signal_state.json" `
+  --mount type=bind,source="$DataPath",target=/app/data `
+  --restart unless-stopped `
+  crypto-signaler:latest
 
-Write-Host "📜 Attaching to logs..."
-docker logs -f $ContainerName
+# === VERIFY ===
+docker ps --filter "name=uvicorn_app"
+docker port uvicorn_app
+docker exec uvicorn_app sh -lc 'echo $TELEGRAM_BOT_TOKEN; echo $TELEGRAM_CHAT_ID'
+
+# === TEST TELEGRAM PING ===
+Invoke-RestMethod -Uri "https://api.telegram.org/bot$env:TELEGRAM_BOT_TOKEN/sendMessage" `
+  -Method Post -Body @{ chat_id = $env:TELEGRAM_CHAT_ID; text = "Ping from container ✅" }

@@ -1,0 +1,8 @@
+{
+  "BTCUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD": "BUY",
+    "StochRSI": "NEUTRAL"
+  }
+}
