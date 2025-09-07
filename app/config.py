@@ -8,7 +8,8 @@ class Settings(BaseModel):
     bybit_api_key: str | None = os.getenv("BYBIT_API_KEY")
     bybit_api_secret: str | None = os.getenv("BYBIT_API_SECRET")
     default_symbol: str = os.getenv("DEFAULT_SYMBOL", "BTCUSDT")
-    timeframes: list[str] = os.getenv("TIMEFRAMES", "w,m").split(",")
+    symbols: list[str] = [s.strip().upper() for s in os.getenv("SYMBOLS", "BTCUSDT").split(",") if s.strip()]
+    timeframes: list[str] = [t.strip() for t in os.getenv("TIMEFRAMES", "5m,15m,30m,1h,4h,d,w").split(",") if t.strip()]
     telegram_bot_token: str | None = os.getenv("TELEGRAM_BOT_TOKEN")
     telegram_chat_id: str | None = os.getenv("TELEGRAM_CHAT_ID")
     risk_reward: float = float(os.getenv("RISK_REWARD", "3.0"))

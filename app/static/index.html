@@ -222,14 +222,12 @@
     }
 
     function renderReasons(sig){
-      const allowed = new Set(["EMA cross","MACD","StochRSI"]);
       const payload = sig?.signal?.metadata?.reasons ?? sig?.signal?.reasons ?? [];
       const entryFallback = sig?.signal?.entry ?? null;
       if (!Array.isArray(payload) || payload.length === 0) return '<span class="muted">-</span>';
 
-      const objs = (typeof payload[0] === 'string')
-        ? []
-        : payload.filter(o => allowed.has(o?.name));
+      // Show all indicators, including NEUTRAL
+      const objs = (typeof payload[0] === 'string') ? [] : payload;
 
       if (objs.length === 0) return '<span class="muted">-</span>';
 

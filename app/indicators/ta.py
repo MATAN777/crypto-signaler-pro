@@ -10,12 +10,12 @@ class IndicatorParams:
     ema_mid: int = 75
     ema_slow: int = 200
     rsi_len: int = 14
-    stoch_len: int = 14
-    stoch_k: int = 3
-    stoch_d: int = 3
-    macd_fast: int = 12
-    macd_slow: int = 26
-    macd_signal: int = 9
+    stoch_len: int = 25
+    stoch_k: int = 7
+    stoch_d: int = 7
+    macd_fast: int = 33
+    macd_slow: int = 55
+    macd_signal: int = 55
 
 def _ema(s: pd.Series, length: int) -> pd.Series:
     return s.ewm(span=length, adjust=False).mean()
@@ -83,7 +83,7 @@ def compute_fib_031(df: pd.DataFrame, lookback: int = 180) -> dict | None:
     window = data.tail(lookback)
     swing_high = float(window["high"].max())
     swing_low  = float(window["low"].min())
-    direction = "up" if (last["close"] > last["ema_mid"] and ( "ema_fast" not in data.columns or last.get("ema_fast", last["close"]) > last["ema_mid"])) else "down"
+    direction = "up" if (last["close"] > last["ema_mid"] and ("ema_fast" not in data.columns or last.get("ema_fast", last["close"]) > last["ema_mid"])) else "down"
     rng = swing_high - swing_low
     if rng <= 0 or math.isnan(rng):
         return None

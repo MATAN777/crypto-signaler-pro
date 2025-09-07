@@ -1,8 +1,422 @@
 {
+  "AVAXUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "BTCUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "LTCUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "BNBUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "XRPUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "ETHUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "DOGEUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "BCHUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "FILUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "SOLUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "UNIUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "LINKUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "TRXUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "SUIUSDT::5m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "BNBUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "FILUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "BCHUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "BUY",
+    "StochRSI Divergence": "BUY"
+  },
+  "LTCUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "XRPUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "ETHUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "SOLUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "BUY",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "UNIUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "BTCUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "DOGEUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "SUIUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "AVAXUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "LINKUSDT::15m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "TRXUSDT::15m": {
+    "EMA 35/75": "BUY",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "FILUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "BNBUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "UNIUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "LINKUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "TRXUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "BTCUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "SUIUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "BCHUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "DOGEUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "SOLUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "AVAXUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "LTCUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "XRPUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "ETHUSDT::30m": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "LTCUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "DOGEUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "TRXUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "BCHUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "SUIUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "XRPUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "AVAXUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "BUY",
+    "StochRSI Divergence": "BUY"
+  },
+  "ETHUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "FILUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "LINKUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
   "BTCUSDT::1h": {
     "EMA 35/75": "NEUTRAL",
     "EMA 75/200": "NEUTRAL",
-    "MACD": "BUY",
-    "StochRSI": "NEUTRAL"
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "BNBUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "UNIUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "SOLUSDT::1h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "LINKUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "AVAXUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "FILUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "BNBUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "SELL"
+  },
+  "UNIUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "TRXUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "SOLUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "BCHUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "SUIUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "BTCUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "DOGEUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "ETHUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "BUY"
+  },
+  "XRPUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
+  },
+  "LTCUSDT::4h": {
+    "EMA 35/75": "NEUTRAL",
+    "EMA 75/200": "NEUTRAL",
+    "MACD Cross": "NEUTRAL",
+    "StochRSI Divergence": "NEUTRAL"
   }
 }

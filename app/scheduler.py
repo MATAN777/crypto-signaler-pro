@@ -5,7 +5,12 @@ import asyncio
 
 from app.config import settings
 from app.clients.bybit_client import fetch_klines
-from app.indicators.ta import IndicatorParams, compute_indicators, compute_fib_031, approximate_zones
+from app.indicators.ta import (
+    IndicatorParams,
+    compute_indicators,
+    compute_fib_031,
+    approximate_zones,
+)
 from app.strategies.rules import make_signal
 from app.clients.plot import plot_chart
 from app.notifiers.telegram import send_telegram_photo
@@ -29,12 +34,13 @@ CRON_MAP = {
 def _format_caption(symbol: str, timeframe: str, sig: dict, changed: list[str], fib: dict | None, zones: dict | None) -> str:
     ind = sig.get("metadata", {}).get("indicators", {})
     rows = []
-    for k in ["EMA 35/75","EMA 75/200","MACD","StochRSI"]:
+    for k in ["EMA 35/75", "EMA 75/200", "MACD Cross", "StochRSI Divergence"]:
         v = ind.get(k, "-")
         mark = " 🔥" if k in changed else ""
         rows.append(f"{k}: <b>{v}</b>{mark}")
     body = "\n".join(rows)
 
+    # Include fib and zones for context in notifications
     fib_line = ""
     if fib and fib.get("level") is not None:
         fib_line = f"\nFib 0.31: <b>{fib['level']:.3f}</b> ({fib.get('direction','')})"
@@ -77,9 +83,14 @@ async def run_signal_once(symbol: str, timeframe: str, params: "IndicatorParams"
 
 def configure_scheduler(app_state, params: "IndicatorParams"):
     scheduler = AsyncIOScheduler()
-    symbol = settings.default_symbol
-    for tf, trig in CRON_MAP.items():
-        if tf in settings.timeframes:
-            scheduler.add_job(lambda s=symbol, t=tf: asyncio.create_task(run_signal_once(s, t, params)), trig)
+    symbols = settings.symbols if settings.symbols else [settings.default_symbol]
+    for sym in symbols:
+        for tf, trig in CRON_MAP.items():
+            if tf in settings.timeframes:
+                scheduler.add_job(
+                    run_signal_once,
+                    trig,
+                    args=[sym, tf, params]
+                )
     scheduler.start()
     app_state.scheduler = scheduler

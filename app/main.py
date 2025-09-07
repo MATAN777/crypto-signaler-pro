@@ -27,8 +27,8 @@ class SettingsModel(BaseModel):
     timeframes: List[str] = ["15m","1h","4h","d","w"]
     risk_reward: float = 3.0
     ema:   List[int] = [35, 75, 200]     # fast, mid, slow
-    stoch: List[int] = [14, 14, 3, 3]    # rsi_len, stoch_len, k, d
-    macd:  List[int] = [12, 26, 9]       # fast, slow, signal
+    stoch: List[int] = [14, 25, 7, 7]    # rsi_len, stoch_len, k, d
+    macd:  List[int] = [33, 55, 55]      # fast, slow, signal
     decision_threshold: float = 1.5
 
 # ---------------- Utils ----------------
@@ -177,7 +177,6 @@ async def analyze(
     df = await fetch_klines(sym, timeframe, limit=limit)
     data = compute_indicators(df, params)
 
-    from app.strategies.rules import make_signal
     sig = make_signal(data, timeframe, params, risk_reward=rr, decision_threshold=s.decision_threshold)
 
     result = {
