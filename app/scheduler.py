@@ -13,7 +13,7 @@ from app.indicators.ta import (
 )
 from app.strategies.rules import make_signal
 from app.clients.plot import plot_chart
-from app.notifiers.telegram import send_telegram_photo
+from app.notifiers.telegram import send_telegram, send_telegram_photo
 from app.services.signal_state import load_for, save_for, diff_indicators
 
 CRON_MAP = {
@@ -73,24 +73,47 @@ async def run_signal_once(symbol: str, timeframe: str, params: "IndicatorParams"
     old_ind = load_for(symbol, timeframe)
     changed = diff_indicators(old_ind, new_ind)
 
+    # Send notifications ONLY when EMA/MACD crosses change (not other indicators)
     if settings.telegram_bot_token and settings.telegram_chat_id and changed:
-        png = plot_chart(data, symbol, timeframe, fib=fib, zones=zones)
-        caption = _format_caption(symbol, timeframe, sig, changed, fib, zones)
-        await send_telegram_photo(settings.telegram_bot_token, settings.telegram_chat_id, png, caption)
+        cross_keys = {"MACD Cross", "EMA 35/75", "EMA 75/200"}
+        # Only send signal when EMA/MACD indicators change to BUY/SELL
+        should_signal = any(
+            (k in cross_keys) and (new_ind.get(k) in ("BUY", "SELL")) for k in changed
+        )
+        
+        if should_signal:
+            caption = _format_caption(symbol, timeframe, sig, changed, fib, zones)
+            await send_telegram(settings.telegram_bot_token, settings.telegram_chat_id, caption)
+
+            # Send snapshot ONLY on EMA/MACD crosses
+            should_snapshot = any(
+                (k in cross_keys) and (new_ind.get(k) in ("BUY", "SELL")) for k in changed
+            )
+            if should_snapshot:
+                png = plot_chart(data, symbol, timeframe, fib=fib, zones=zones)
+                await send_telegram_photo(settings.telegram_bot_token, settings.telegram_chat_id, png, caption)
 
     save_for(symbol, timeframe, new_ind)
     return sig
 
 def configure_scheduler(app_state, params: "IndicatorParams"):
     scheduler = AsyncIOScheduler()
-    symbols = settings.symbols if settings.symbols else [settings.default_symbol]
-    for sym in symbols:
+    # Use live app settings (from FastAPI state), not static config defaults
+    try:
+        tf_list = getattr(app_state, "settings").timeframes
+        symbols = getattr(app_state, "settings").symbols  # List of symbols from settings
+    except Exception:
+        tf_list = settings.timeframes
+        symbols = settings.symbols if settings.symbols else [settings.default_symbol]
+
+    # Schedule jobs for each symbol and timeframe
+    for symbol in symbols:
         for tf, trig in CRON_MAP.items():
-            if tf in settings.timeframes:
+            if tf in tf_list:
                 scheduler.add_job(
                     run_signal_once,
                     trig,
-                    args=[sym, tf, params]
+                    args=[symbol, tf, params]
                 )
     scheduler.start()
     app_state.scheduler = scheduler

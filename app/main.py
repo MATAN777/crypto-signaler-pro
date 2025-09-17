@@ -23,8 +23,9 @@ ALLOWED_TF = {"1m","5m","15m","30m","1h","2h","4h","6h","12h","d","w","m"}
 
 # ---------------- Models ----------------
 class SettingsModel(BaseModel):
-    symbol: str = "BTCUSDT"
-    timeframes: List[str] = ["15m","1h","4h","d","w"]
+    symbol: str = "BTCUSDT"  # Default symbol for single analysis
+    symbols: List[str] = ["BTCUSDT","ETHUSDT","SOLUSDT","XRPUSDT","FILUSDT","BNBUSDT","BCHUSDT","TRXUSDT","LINKUSDT","SUIUSDT","LTCUSDT","UNIUSDT","DOGEUSDT","AVAXUSDT"]  # List of symbols for scheduled signals
+    timeframes: List[str] = ["15m","30m","1h","4h","6h","d","w"]
     risk_reward: float = 3.0
     ema:   List[int] = [35, 75, 200]     # fast, mid, slow
     stoch: List[int] = [14, 25, 7, 7]    # rsi_len, stoch_len, k, d
