@@ -33,6 +33,7 @@ jobs:
 
       - name: Run tests
         env:
+          PYTHONPATH: ${{ github.workspace }}
           TELEGRAM_BOT_TOKEN: 'dummy'
           TELEGRAM_CHAT_ID: 'dummy'
         run: |
